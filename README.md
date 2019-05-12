@@ -19,6 +19,7 @@ MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https:/
 * In command line, navigate to the folder where the image folders and the compiled .jar file are, then run the jar file. Be sure to pass your bot's authorization token as an argument if you haven't gone into the source code and modified it yourself.
 
 **Example: **
+
 C:\Users\apaz>cd Desktop
 
 C:\Users\apaz\Desktop>cd MonikaBot Prebuilt
