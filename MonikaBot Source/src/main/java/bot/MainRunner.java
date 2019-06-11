@@ -35,6 +35,10 @@ public class MainRunner {
 
 		// The ClientBuilder object is where you attach parameters for configuring this
 		// instance of this Discord4J bot, such as withToken, setDaemon etc
-		return new ClientBuilder().withToken(token).build();
+		ClientBuilder Monika = new ClientBuilder();
+		Monika.withToken(token);
+		Monika.set5xxRetryCount(Integer.MAX_VALUE);
+		Monika.setMaxReconnectAttempts(Integer.MAX_VALUE);
+		return Monika.build();
 	}
 }
