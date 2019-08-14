@@ -3,14 +3,52 @@ A Monika Discord bot which posts quotes and images.
 
 MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https://mvnrepository.com/artifact/com.discord4j/Discord4J/2.10.1)
 
-# Commands
-**/monika**  *Posts a random quote*  
-**/monika #**  *Posts the quote specified*  
-**/index**  *Updates the image list and posts the totals*  
-**/sfwMonika**  *Posts a random sfw Monika pic*  
-**/nsfwMonika**  *Posts a random nsfw Monika pic*  
-**/enableNSFW**  *Enables /nsfwMonika in the current channel (Disabled by default)*  
-**/disableNSFW**  *Disables /nsfwMonika in the current channel (Disabled by default)*
+# Commands  
+**/monika **  
+*Arguments: 1 - 62*
+*Posts the quote specified, or a random quote if the number is absent or that number quote could not found.*  
+**/index**  
+*Arguments: none*
+*Updates the image list and posts the totals.*  
+**/sfwMonika**  
+*Arguments: none*
+*Posts a random sfw Monika pic.*  
+
+**/nsfwMonika**  
+*Arguments: none*
+*Posts a random nsfw Monika pic*  
+**/enableNSFW**  
+*Arguments: none*
+*Enables /nsfwMonika in the current channel (Disabled by default)*  
+**/disableNSFW**  
+*Arguments: none*
+*Disables /nsfwMonika in the current channel (Disabled by default)*
+
+# Interserver Commands
+**/listServers**
+*Arguments: none*
+*Gets a list of servers that this bot is on.*
+
+**/listChannels**
+*Arguments: ServerKeyword post|print*
+*Gets a list of channels in the server specified by the keyword. This is case-sensitive, so be careful with that. Posts in discord when you type posts afterward.*
+
+**/rip**
+*Arguments: ServerKeyword ChannelKeyword file|post|print*
+*Collects all the links to all the attachments in the specified channel on the specified server. This is (usually) a truly massive number of images. Be careful with this command, especially when posting. Saving to a file allows you to move those images around with /transplant.*
+
+**/transplant**
+*Arguments: none, handled by /rip and /rc*
+*Effectively creates a GUI inside discord with which to move around the links which have been dumped into a file by /rip. Register channels first with /registerchannel or it's alias /rc, then use this command and react to the resulting message with an emoji to move the image into that channel, or press the green X to skip that image. Type /reset to stop.*
+
+**/registerChannel OR /rc**
+*Arguments: none*
+*Registers this channel an emoji to transplant with. See /transplant.*
+
+**/reset**
+*Arguments: none*
+*Clears the global state of the interserver commands. Call this when you're done transplanting.*
+
 
 # Installation
 * Go to the [Discord Developers Page](https://discordapp.com/developers/applications/) and create an application. There are guides that can walk you through setting up a bot. I like [this one](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token).
