@@ -913,7 +913,7 @@ public class QuoteHandler {
 						+ "I'm sorry for making such a big deal out of it...\n"
 						+ "And I love you no matter what, so you can do what you need to do.\n"
 						+ "Now, where was I...?\n"));
-		
+
 		System.out.println("Done.");
 	}
 
