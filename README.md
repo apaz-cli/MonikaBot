@@ -44,13 +44,13 @@ MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https:/
 
 *Collects all the links to all the attachments in the specified channel on the specified server. This is (usually) a truly massive number of images. Be careful with this command, especially when posting. Saving to a file allows you to move those images around with /transplant.*
 
-**/transplant** *Arguments: none, handled by **/rip** and **/rc** *
+**/transplant** *Arguments: none, handled by **/rip** and **/rc***
 
 *Effectively creates a GUI inside discord with which to move around the links which have been dumped into a file by **/rip.** Register channels first with **/registerchannel** or it's alias **/rc,** then use this command and react to the resulting message with an emoji to move the image into that channel, or press the green X to skip that image. Type **/reset** to stop.*
 
 **/registerChannel OR **/rc**** *Arguments: none*
 
-*Registers this channel an emoji to transplant with. See **/transplant.** *
+*Registers this channel an emoji to transplant with. See **/transplant.***
 
 **/reset** *Arguments: none*
 
@@ -65,7 +65,7 @@ MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https:/
 * Fill up the image folders with images of Monika. I used [Grabber](https://github.com/Bionus/imgbrd-grabber) to get all my images. You can use whatever method you want though.
 * In command line, navigate to the folder where the image folders and the compiled .jar file are, then run the jar file. Be sure to pass your bot's authorization token as an argument if you haven't gone into the source code and modified it yourself.
 
-**Example: **
+**Example:**
 
 C:\Users\apaz>cd Desktop
 
