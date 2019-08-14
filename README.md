@@ -24,11 +24,11 @@ MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https:/
 
 **/enableNSFW** *Arguments: none*
 
-*Enables /nsfwMonika in the current channel (Disabled by default)*  
+*Enables **/nsfwMonika** in the current channel (Disabled by default)*  
 
 **/disableNSFW** *Arguments: none*
 
-*Disables /nsfwMonika in the current channel (Disabled by default)*
+*Disables **/nsfwMonika** in the current channel (Disabled by default)*
 
 
 # Interserver Commands
@@ -44,11 +44,11 @@ MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https:/
 
 *Collects all the links to all the attachments in the specified channel on the specified server. This is (usually) a truly massive number of images. Be careful with this command, especially when posting. Saving to a file allows you to move those images around with /transplant.*
 
-**/transplant** *Arguments: none, handled by /rip and /rc*
+**/transplant** *Arguments: none, handled by **/rip** and /rc*
 
-*Effectively creates a GUI inside discord with which to move around the links which have been dumped into a file by /rip. Register channels first with /registerchannel or it's alias /rc, then use this command and react to the resulting message with an emoji to move the image into that channel, or press the green X to skip that image. Type /reset to stop.*
+*Effectively creates a GUI inside discord with which to move around the links which have been dumped into a file by **/rip.** Register channels first with **/registerchannel** or it's alias **/rc,** then use this command and react to the resulting message with an emoji to move the image into that channel, or press the green X to skip that image. Type **/reset** to stop.*
 
-**/registerChannel OR /rc** *Arguments: none*
+**/registerChannel OR **/rc**** *Arguments: none*
 
 *Registers this channel an emoji to transplant with. See /transplant.*
 
