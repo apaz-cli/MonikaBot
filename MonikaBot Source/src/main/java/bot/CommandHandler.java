@@ -2,11 +2,11 @@ package bot;
 
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.Permissions;
+import sx.blah.discord.util.MessageHistory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.*;
 
 public class CommandHandler {
@@ -15,68 +15,46 @@ public class CommandHandler {
 	// there isn't this massive if/elif block.
 	private static Map<String, Command> commandMap = new HashMap<>();
 
-	private static String nsfwChannelListFileName = "NSFW Channel List.txt";
-	private static String nsfwChannelListFilePath = System.getProperty("user.dir") + File.separator
-			+ nsfwChannelListFileName;
-	private static File nsfwChannelListFile = new File(nsfwChannelListFilePath);
-	private static ArrayList<String> nsfwChannelList = new ArrayList<>();
-
-	public static void saveNSFWChannelList() {
-		PrintWriter out = null;
-		try {
-			out = new PrintWriter(nsfwChannelListFile);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.err.println(
-					"Could not save the NSFW channel list file. Make sure that java has read/write permission at this file location.");
-		}
-		for (int i = 0; i < nsfwChannelList.size(); i++) {
-			out.println(nsfwChannelList.get(i));
-		}
-		out.close();
-	}
-
-	public static void loadNSFWChannelList() {
-		Scanner channelScanner = null;
-		try {
-			channelScanner = new Scanner(nsfwChannelListFile);
-		} catch (FileNotFoundException e) {
-			System.err.println("Could not find the NSFW channel list file. Load failed.");
-			return;
-		}
-		if (channelScanner.hasNext()) {
-			nsfwChannelList.clear();
-			while (channelScanner.hasNext()) {
-				String c = channelScanner.next();
-				nsfwChannelList.add(c);
-				System.out.println("Loaded " + c + " into the NSFW channel list.");
-			}
-		} else {
-			System.out.println("The NSFW channel list file is empty. Not modifying working list.");
-		}
-		channelScanner.close();
-	}
-
 	// Register commands
 	static {
-		System.out.println("");
+		System.out.println();
 		System.out.println("Loading the Command Map.");
 
 		commandMap.put("help", (event, args) -> {
-			BotUtils.sendMessage(event.getChannel(), 
-					"```Prolog\nCommand List\n```\n" + 
-					"**/monika**\n" + "*Posts a random quote*\n" + 
-					"**/monika #**\n" + "*Posts the quote specified*\n" + 
-					"**/index**\n" + "*Updates the image list and posts the totals*\n" + 
-					"**/sfwMonika**\n" + "*Posts a random sfw Monika pic*\n" + 
-					"**/nsfwMonika**\n" + "*Posts a random nsfw Monika pic*\n" + 
-					"**/enableNSFW**\n" + "*Enables /nsfwMonika in the current channel (Disabled by default)*\n" + 
-					"**/disableNSFW**\n" + "*Disables /nsfwMonika in the current channel (Disabled by default)*\n"
-					);
+			String baseCommandList = "```Prolog\nCommand List\n```\n" + "**/monika**\n" + "*Posts a random quote*\n"
+					+ "**/monika #**\n" + "*Posts the quote specified*\n" + "**/index**\n"
+					+ "*Updates the image list and posts the totals*\n" + "**/sfwMonika**\n"
+					+ "*Posts a random sfw Monika pic*\n" + "**/cleanup**\n"
+					+ "*Deletes all posts by this bot in this channel*";
+			String nsfwCommands = "```Prolog\nNSFW Commands\n```\n" + "**/nsfwMonika**\n"
+					+ "*Posts a random nsfw Monika pic*\n" + "**/enableNSFW**\n"
+					+ "*Enables /nsfwMonika in the current channel (Disabled by default)*\n" + "**/disableNSFW**\n"
+					+ "*Disables /nsfwMonika in the current channel (Disabled by default)*\n";
+			String interserverCommands = "```Prolog\nInterserver Commands\n```\n" + "**/listServers**\n"
+					+ "*Arguments: none*\n" + "*Gets a list of servers that this bot is on.*\n" + "**/listChannels**\n"
+					+ "*Arguments: ServerKeyword post|print*\n"
+					+ "*Gets a list of channels in the server specified by the keyword. This is case-sensitive, so be careful with that. Posts in discord when you type posts afterward.*\n"
+					+ "**/rip**\n" + "*Arguments: ServerKeyword ChannelKeyword file|post|print*\n"
+					+ "*Collects all the links to all the attachments in the specified channel on the specified server. This is (usually) a truly massive number of images. Be careful with this command, especially when posting. Saving to a file allows you to move those images around with /transplant.*\n"
+					+ "**/transplant**\n" + "*Arguments: none, handled by /rip and /rc*\n"
+					+ "*Effectively creates a GUI inside discord with which to move around the links which have been dumped into a file by /rip. Register channels first with /registerchannel or it's alias /rc, then use this command and react to the resulting message with an emoji to move the image into that channel, or press the green X to skip that image. Type /reset to stop.*\n"
+					+ "**/registerChannel OR /rc**\n" + "*Arguments: none*\n"
+					+ "*Registers this channel an emoji to transplant with. See /transplant.*\n" + "**/reset**\n"
+					+ "*Arguments: none*\n"
+					+ "*Clears the global state of the interserver commands. Call this when you're done transplanting.*\n";
+
+			String helpMessage = baseCommandList;
+			if (ImageHandler.isChannelNSFW(event.getChannel())) {
+				helpMessage += nsfwCommands;
+			}
+			if (InterserverCommands.isAuthorized(event.getAuthor(), event.getGuild())) {
+				helpMessage += interserverCommands;
+			}
+
+			BotUtils.sendMessage(event.getChannel(), helpMessage);
 		});
 
 		commandMap.put("monika", (event, args) -> {
-			// Get the appropriate string from the map
 			String quoteString = QuoteHandler.getQuote(event, args);
 			if (quoteString != null) {
 				BotUtils.sendQuote(event.getChannel(), quoteString);
@@ -84,26 +62,29 @@ public class CommandHandler {
 		});
 
 		commandMap.put("index", (event, args) -> {
-			BotUtils.sendMessage(event.getChannel(), "Loaded " + ImageHandler.indexSFW() + " SFW Images.\n" + "Loaded "
-					+ ImageHandler.indexNSFW() + " NSFW images.");
+			String sfwMessage = "Loaded " + ImageHandler.indexSFW() + " SFW Images.";
+			String nsfwMessage = "Loaded " + ImageHandler.indexNSFW() + " NSFW images.";
+			String message = ImageHandler.isChannelNSFW(event.getChannel()) ? sfwMessage + "\n" + nsfwMessage
+					: sfwMessage;
+			BotUtils.sendMessage(event.getChannel(), message);
 		});
 
 		commandMap.put("sfwmonika", (event, args) -> {
 			File image = ImageHandler.getRandomSFWImage();
 			if (image == null) {
-				System.err.println("getImage returned null. Is the SFW image folder empty?");
+				System.err.println("Please fill the sfw image folder with images.");
 			} else {
 				BotUtils.sendFile(event.getChannel(), image);
 			}
 		});
 
 		commandMap.put("nsfwmonika", (event, args) -> {
-			if (!nsfwChannelList.contains(event.getChannel().getStringID())) {
+			if (!ImageHandler.nsfwChannelList.contains(event.getChannel().getStringID())) {
 				BotUtils.sendMessage(event.getChannel(), "NSFW Commands are not enabled in this channel.");
 			} else {
 				File image = ImageHandler.getRandomNSFWImage();
 				if (image == null) {
-					System.err.println("getImage returned null. Is the NSFW image folder empty?");
+					System.err.println("Please fill the nsfw image folder with images.");
 				} else {
 					BotUtils.sendFile(event.getChannel(), image);
 				}
@@ -111,41 +92,68 @@ public class CommandHandler {
 		});
 
 		commandMap.put("enablensfw", (event, args) -> {
-			if (event.getAuthor().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)
-			/* || event.getAuthor().getLongID() == 222363567192670219L */) {
-				// As to avoid duplicate entries
-				if (!nsfwChannelList.contains(event.getChannel().getStringID())) {
-					nsfwChannelList.add(event.getChannel().getStringID());
-					BotUtils.sendMessage(event.getChannel(),
-							"NSFW enabled in <#" + event.getChannel().getStringID() + ">");
-					System.out.println("NSFW enabled in " + event.getChannel().getName() + ".");
-					saveNSFWChannelList();
-				}
-			} else {
-				BotUtils.sendMessage(event.getChannel(), event.getAuthor().getDisplayName(event.getGuild())
-						+ ", you don't have permission to use that command on this server.");
-				System.out.println(event.getAuthor().getDisplayName(event.getGuild())
-						+ " does not have permission to use this command on this server.");
+			if (!event.getAuthor().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)) {
+				return;
 			}
+
+			// As to avoid duplicate entries
+			if (!ImageHandler.nsfwChannelList.contains(event.getChannel().getStringID())) {
+				ImageHandler.nsfwChannelList.add(event.getChannel().getStringID());
+				BotUtils.sendMessage(event.getChannel(), "NSFW enabled in <#" + event.getChannel().getStringID() + ">");
+				System.out.println("NSFW enabled in " + event.getChannel().getName() + ".");
+				ImageHandler.saveNSFWChannelList();
+			}
+
 		});
 
 		commandMap.put("disablensfw", (event, args) -> {
-			if (event.getAuthor().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)
-			/* || event.getAuthor().getLongID() == 222363567192670219L */) {
-				nsfwChannelList.remove(event.getChannel().getStringID());
-				BotUtils.sendMessage(event.getChannel(),
-						"NSFW disabled in <#" + event.getChannel().getStringID() + ">");
-				System.out.println("NSFW disabled in " + event.getChannel().getName() + ".");
-				saveNSFWChannelList();
-			} else {
-				BotUtils.sendMessage(event.getChannel(), event.getAuthor().getDisplayName(event.getGuild())
-						+ ", you don't have permission to use that command on this server.");
-				System.out.println(event.getAuthor().getDisplayName(event.getGuild())
-						+ " does not have permission to use this command on this server.");
+			if (!event.getAuthor().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)) {
+				return;
+			}
+
+			ImageHandler.nsfwChannelList.remove(event.getChannel().getStringID());
+			BotUtils.sendMessage(event.getChannel(), "NSFW disabled in <#" + event.getChannel().getStringID() + ">");
+			System.out.println("NSFW disabled in " + event.getChannel().getName() + ".");
+			ImageHandler.saveNSFWChannelList();
+		});
+
+		commandMap.put("cleanup", (event, args) -> {
+			if (!event.getAuthor().getPermissionsForGuild(event.getGuild()).contains(Permissions.ADMINISTRATOR)) {
+				return;
+			}
+
+			event.getMessage().delete();
+			MessageHistory history = event.getChannel().getFullMessageHistory();
+			long ourID = MainRunner.getClient().getOurUser().getLongID();
+			for (IMessage m : history.asArray()) {
+				if (m.getAuthor().getLongID() == ourID) {
+					m.delete();
+					// Courtesy to Discord to avoid RateLimitExceptions
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		});
 
-		System.out.println("Done.");
+		if (InterserverCommands.ENABLED) {
+			commandMap.put("listservers", InterserverCommands.listServers);
+			// Keyword for server file|post|print
+			commandMap.put("listchannels", InterserverCommands.listServerChannels);
+			// ServerKeyword ChannelKeyword file|post|print
+			commandMap.put("rip", InterserverCommands.rip);
+			// No arguments
+			commandMap.put("registerchannel", InterserverCommands.registerChannel);
+			// No arguments, shorthand for the above
+			commandMap.put("rc", InterserverCommands.registerChannel);
+			// No arguments
+			commandMap.put("reset", InterserverCommands.resetGlobalState);
+			// No arguments, information is gathered from the placement of registerChannel
+			// commands.
+			commandMap.put("transplant", InterserverCommands.transplant);
+		}
 
 	}
 

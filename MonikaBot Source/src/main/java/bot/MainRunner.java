@@ -2,16 +2,28 @@ package bot;
 
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
+import sx.blah.discord.api.events.EventDispatcher;
 
 public class MainRunner {
 
 	// Change this if the token is regenerated, or overwrite it with argument from
 	// command line.
-	private static String token = "NTU1OTYyNjI1OTY0Mzc2MDY0.D2y6lQ.dUX0f7QZhSvAhclv1qubmqfdlu8";
+	private static String token = "NTU1OTYyNjI1OTY0Mzc2MDY0.XNh6cg.SwMn1H9tSzFNxmbnuSlqPVLNS4E";
+
+	// Handles the creation and getting of a IDiscordClient object for a token
+	private static IDiscordClient getBuiltDiscordClient(String token) {
+		ClientBuilder Monika = new ClientBuilder();
+		Monika.withToken(token);
+		Monika.set5xxRetryCount(Integer.MAX_VALUE);
+		Monika.setMaxReconnectAttempts(Integer.MAX_VALUE);
+		return Monika.build();
+	}
+
+	private static IDiscordClient cli = getBuiltDiscordClient(token);;
 
 	public static void main(String[] args) {
-		
-		CommandHandler.loadNSFWChannelList();
+
+		ImageHandler.loadNSFWChannelList();
 		ImageHandler.indexSFW();
 		ImageHandler.indexNSFW();
 
@@ -19,26 +31,23 @@ public class MainRunner {
 			token = args[0];
 		}
 
-		IDiscordClient cli = getBuiltDiscordClient(token);
+		cli = getBuiltDiscordClient(token);
 
 		// Register a listener via the EventSubscriber annotation which allows for
 		// organization and delegation of events
-		cli.getDispatcher().registerListener(new CommandHandler());
+		EventDispatcher dispatcher = cli.getDispatcher();
+		dispatcher.registerListener(new CommandHandler());
+
+		if (InterserverCommands.ENABLED) {
+			dispatcher.registerListener(new InterserverCommands());
+		}
 
 		// Only login after all events are registered otherwise some may be missed.
 		cli.login();
-
 	}
 
-	// Handles the creation and getting of a IDiscordClient object for a token
-	static IDiscordClient getBuiltDiscordClient(String token) {
-
-		// The ClientBuilder object is where you attach parameters for configuring this
-		// instance of this Discord4J bot, such as withToken, setDaemon etc
-		ClientBuilder Monika = new ClientBuilder();
-		Monika.withToken(token);
-		Monika.set5xxRetryCount(Integer.MAX_VALUE);
-		Monika.setMaxReconnectAttempts(Integer.MAX_VALUE);
-		return Monika.build();
+	static IDiscordClient getClient() {
+		return cli;
 	}
+	
 }

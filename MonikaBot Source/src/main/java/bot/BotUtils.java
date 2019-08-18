@@ -2,15 +2,18 @@ package bot;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.RequestBuffer;
 
+import bot.messagewrappers.*;
+
 class BotUtils {
 
-	// Constants for use throughout the bot
 	static String BOT_PREFIX = "/";
-	static String SPLIT_STR = ":";
+	private static String MESSAGE_SPLIT_CHAR = ":";
 
 	// Helper functions to make certain aspects of the bot easier to use.
 	static void sendQuote(IChannel channel, String message) {
@@ -23,7 +26,7 @@ class BotUtils {
 				boolean sent = false;
 				while (!sent) {
 					if (message.length() > 1999) {
-						String[] messages = message.split(SPLIT_STR);
+						String[] messages = message.split(MESSAGE_SPLIT_CHAR);
 						int i = 0;
 						for (int z = 0; z < messages.length; z++) {
 
@@ -50,38 +53,98 @@ class BotUtils {
 			}
 		});
 	}
-	
-	static void sendMessage(IChannel channel, String message) {
-		RequestBuffer.request(() -> {
-			try {
-				channel.sendMessage(message);
-			} catch (DiscordException e) {
-				System.out.println("Message could not be sent. Returned the error: ");
-				e.printStackTrace();
-			}
-		});
-	}
-	
-	static void sendFile(IChannel channel, File file) {
-		RequestBuffer.request(() -> {
-			try {
-				channel.sendFile(file);
-			} catch (DiscordException | FileNotFoundException e) {
-				System.out.println("Message could not be sent. Returned the error: ");
-				e.printStackTrace();
-			}
-		});
+
+	public static String codeBlock(String message) {
+		return "```\n" + message + "\n```";
 	}
 
-	static void sendFileMessage(IChannel channel, String message, File file) {
+	public static String codeBlock(String message, String language) {
+		return "```" + language + "\n" + message + "```";
+	}
+	
+	static IMessage sendMessage(IChannel channel, String message) {
+		Box box = new Box();
+		Flag finished = new Flag();
+
 		RequestBuffer.request(() -> {
-			try {
-				channel.sendFile(message, file);
-			} catch (DiscordException | FileNotFoundException e) {
-				System.out.println("Message could not be sent. Returned the error: ");
-				e.printStackTrace();
-			}
+		    synchronized (finished) {
+		        try {
+		            box.result = channel.sendMessage(message);
+		        } catch (DiscordException e) {
+		            System.out.println("Message could not be sent. Returned the error: ");
+		            e.printStackTrace();
+		        } finally {
+		            finished.on = true;
+		            finished.notify();
+		        }
+		    }
 		});
+		synchronized (finished) {
+		    if (!finished.on)
+				try {
+					finished.wait(60000);
+				} catch (InterruptedException e) {
+				}
+		}
+		return box.result;
+	}
+
+	static IMessage sendFile(IChannel channel, File file) {
+		class Box { IMessage result; }
+		class Flag { boolean on; }
+		Box box = new Box();
+		Flag finished = new Flag();
+
+		RequestBuffer.request(() -> {
+		    synchronized (finished) {
+		        try {
+		            box.result = channel.sendFile(file);
+		        } catch (DiscordException | FileNotFoundException e) {
+		            System.out.println("Message could not be sent. Returned the error: ");
+		            e.printStackTrace();
+		        } finally {
+		            finished.on = true;
+		            finished.notify();
+		        }
+		    }
+		});
+		synchronized (finished) {
+		    if (!finished.on)
+				try {
+					finished.wait(60000);
+				} catch (InterruptedException e) {
+				}
+		}
+		return box.result;
+	}
+
+	static IMessage sendFileMessage(IChannel channel, String message, File file) {
+		class Box { IMessage result; }
+		class Flag { boolean on; }
+		Box box = new Box();
+		Flag finished = new Flag();
+
+		RequestBuffer.request(() -> {
+		    synchronized (finished) {
+		        try {
+		            box.result = channel.sendFile(message, file);
+		        } catch (DiscordException | FileNotFoundException e) {
+		            System.out.println("Message could not be sent. Returned the error: ");
+		            e.printStackTrace();
+		        } finally {
+		            finished.on = true;
+		            finished.notify();
+		        }
+		    }
+		});
+		synchronized (finished) {
+		    if (!finished.on)
+				try {
+					finished.wait(60000);
+				} catch (InterruptedException e) {
+				}
+		}
+		return box.result;
 	}
 
 }
