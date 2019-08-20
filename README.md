@@ -4,7 +4,7 @@ A Monika Discord bot which posts quotes and images.
 MonikaBot is a Java Maven project, built with [Discord4J Version 2.10.1](https://mvnrepository.com/artifact/com.discord4j/Discord4J/2.10.1)
 
 ![Image of Monika](https://cdn.discordapp.com/attachments/438166360749637652/613181081352667166/monika.png)
-
+Image credit: [Startoucher](https://www.deviantart.com/startoucher/art/Just-Monika-810315339)
 
 # Commands  
 
