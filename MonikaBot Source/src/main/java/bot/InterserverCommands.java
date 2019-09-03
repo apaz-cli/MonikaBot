@@ -29,9 +29,12 @@ public class InterserverCommands {
 
 	// Configs
 	public static final boolean ENABLED = true;
-	private static final String interserverFolderPath = System.getProperty("user.dir") + File.separator + "Interserver Attachment Folder"; 
-	private static final String attachmentLinksFilePath = interserverFolderPath + File.separator + "Attachment Links.txt";
-	private static final String completedLinksFilePath = interserverFolderPath + File.separator + "Completed Attachment Links.txt";
+	private static final String interserverFolderPath = System.getProperty("user.dir") + File.separator
+			+ "Interserver Attachment Folder";
+	private static final String attachmentLinksFilePath = interserverFolderPath + File.separator
+			+ "Attachment Links.txt";
+	private static final String completedLinksFilePath = interserverFolderPath + File.separator
+			+ "Completed Attachment Links.txt";
 
 	// Global State
 	private static boolean transplanting = false;
@@ -94,7 +97,6 @@ public class InterserverCommands {
 			return;
 		}
 
-
 		// Change this to find out different things
 		String indentedChannels = "";
 		for (IChannel ch : targetGuild.getChannels()) {
@@ -108,7 +110,7 @@ public class InterserverCommands {
 			System.out.println(channelOutput);
 			return;
 		}
-		
+
 		if (tokens[1].contains("post")) {
 			BotUtils.sendMessage(event.getChannel(), channelOutput);
 		} else {
@@ -126,7 +128,7 @@ public class InterserverCommands {
 		String[] tokens = args.trim().split(" ");
 		if (tokens.length != 3) {
 			BotUtils.sendMessage(event.getChannel(),
-					"The syntax for this command is ServerKeyword ChannelKeyword file|post|print");
+					"The syntax for this command is ServerKeyword ChannelKeyword file|post|postfile|print");
 		}
 
 		List<IGuild> guildList = MainRunner.getClient().getGuilds();
@@ -164,18 +166,11 @@ public class InterserverCommands {
 			}
 		}
 
-		if (tokens[2].contains("file")) {
-			String filename = attachmentLinksFilePath;
-			PrintWriter out = null;
-			try {
-				out = new PrintWriter(filename);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			for (String l : allAttachmentURLs) {
-				out.println(l);
-			}
-			out.close();
+		if (tokens[2].contains("postfile")) {
+			saveAttachmentLinks(allAttachmentURLs);
+			BotUtils.sendFile(event.getChannel(), new File(attachmentLinksFilePath));
+		} else if (tokens[2].contains("file")) {
+			saveAttachmentLinks(allAttachmentURLs);
 		} else if (tokens[2].contains("post")) {
 			for (int i = 0; i < allAttachmentURLs.size(); i += 5) {
 				String attachmentMessage = "";
@@ -207,14 +202,14 @@ public class InterserverCommands {
 			event.getMessage().delete();
 			return;
 		}
-		
+
 		if (emojiToChannel.containsValue(event.getChannel())) {
 			BotUtils.sendMessage(event.getChannel(), "This channel has already been registered.");
 			return;
 		}
-		
+
 		int emojiNumber = emojiToChannel.size();
-		
+
 		emojiToChannel.put(intCharacterToEmoji.get(emojiNumber), event.getChannel());
 		IMessage message = event.getChannel()
 				.sendMessage("Channel registered to " + intCharacterToEmoji.get(emojiNumber) + ".");
@@ -401,4 +396,24 @@ public class InterserverCommands {
 		}
 		return authorized;
 	}
+
+	private static void saveAttachmentLinks(List<String> URLs) {
+		PrintWriter out = null;
+		try {
+			File d = new File(interserverFolderPath);
+			File f = new File(attachmentLinksFilePath);
+			// Creates if not exists
+			d.mkdirs();
+			f.createNewFile();
+			
+			out = new PrintWriter(f);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		for (String l : URLs) {
+			out.println(l);
+		}
+		out.close();
+	}
+
 }
