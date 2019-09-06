@@ -43,7 +43,7 @@ Image credit: [Startoucher](https://www.deviantart.com/startoucher/art/Just-Moni
 
 *Gets a list of channels in the server specified by the keyword. This is case-sensitive, so be careful with that. Posts in discord when you type posts afterward.*
 
-**/rip** *Arguments: ServerKeyword ChannelKeyword file|post|print*
+**/rip** *Arguments: ServerKeyword ChannelKeyword file|post|postfile|print*
 
 *Collects all the links to all the attachments in the specified channel on the specified server. This is (usually) a truly massive number of images. Be careful with this command, especially when posting. Saving to a file allows you to move those images around with **/transplant.***
 
