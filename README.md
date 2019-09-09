@@ -69,8 +69,8 @@ Image credit: [Startoucher](https://www.deviantart.com/startoucher/art/Just-Moni
 
 **Example: **
 
-C:\Users\apaz>cd Desktop
+C:\Users\apaz>cd "Downloads"
 
-C:\Users\apaz\Desktop>cd MonikaBot Prebuilt
+C:\Users\apaz\Downloads>cd "MonikaBot-master/MonikaBot Prebuilt"
 
 C:\Users\apaz\Desktop\MonikaBot Prebuilt>java -jar MonikaBot.jar NTU1OTYyNjI1OTY0Mzc2MDY0.D2y6lQ.dUX0f7QZhSvAhclv1qubmqfdlu8
