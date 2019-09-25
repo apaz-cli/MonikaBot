@@ -459,7 +459,7 @@ public class QuoteHandler {
 				+ "And by the way, you are too, [player].\n" + "You're the perfect combination of human and cuteness.\n"
 				+ "That's why there was never a chance I wouldn't fall for you.\n"));
 
-		quoteMap.put(28, new Quote("Coffe With Books", "Hey, I wonder if Yuri's tea set is still somewhere in here...\n"
+		quoteMap.put(28, new Quote("Coffee With Books", "Hey, I wonder if Yuri's tea set is still somewhere in here...\n"
 				+ "...Or maybe that got deleted, too.\n" + "It's kind of funny how Yuri took her tea so seriously.\n"
 				+ "I mean, I'm not complaining, because I liked it, too.\n" + "But I always wonder with her...\n"
 				+ "Is it truly passion for her hobbies, or is she just concerned about appearing sophisticated to everyone else?\n"
