@@ -1029,8 +1029,7 @@ public class URLImageUtils {
 			} catch (MalformedURLException e) {
 				System.err.print(
 						"There was an issue where a URL accepted by the URL_REGEX pattern was not accepted by java.net.URL's constructor.\n"
-								+ "URL: " + m.group() + "\n" 
-								+ "Please create an issue on Github at:\n"
+								+ "URL: " + m.group() + "\n" + "Please create an issue on Github at:\n"
 								+ "https://github.com/Aaron-Pazdera/MonikaBot");
 			}
 		}
@@ -1050,8 +1049,10 @@ public class URLImageUtils {
 	}
 
 	public static String guessMimeFromURL(URL url) {
-		// The replace deals with twitter extensions.
-		String[] pathsplit = url.getPath().replace(":large", "").split("/");
+		// The replace deals with twitter extensions. The ends with deals with trailing slashes, which would mess up the split and cause illegal array accesses.
+		String path = url.getPath().replace(":large", "");
+		path = path.endsWith("/") ? path.substring(0, path.length() - 1): path;
+		String[] pathsplit = path.contains("/") ? path.split("/") : new String[] {path};	
 		String filename = pathsplit[pathsplit.length-1];
 		String[] extensionsplit = filename.split("\\.");
 		String extension = extensionsplit[extensionsplit.length-1];
