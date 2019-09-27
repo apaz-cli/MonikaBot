@@ -7,7 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -159,30 +159,49 @@ public class InterserverCommands {
 			return;
 		}
 
-		List<String> allAttachmentURLs = new ArrayList<>();
+		// Rip all the URLs out of every message, and every message's attachments.
+		List<String> allURLs = new ArrayList<>();
 		for (IMessage m : targetChannel.getFullMessageHistory()) {
 			for (Attachment a : m.getAttachments()) {
-				allAttachmentURLs.add(a.getUrl());
+				allURLs.add(a.getUrl());
+			}
+
+			allURLs.addAll(URLImageUtils.matchAllStrURLs(m.getContent()));
+		}
+
+		// Remove URLs that aren't images.
+		for (int i = 0; i < allURLs.size(); i++) {
+			try {
+				if (!URLImageUtils.isImage(allURLs.get(i))) {
+					allURLs.remove(i);
+				}
+			} catch (MalformedURLException e) {
+				System.err.println(
+						"There was an issue where a URL accepted by the URL_REGEX pattern was not accepted by java.net.URL's constructor.\n"
+						+ "URL: " + allURLs.get(i) + "\n" 
+						+ "Please create an issue on Github at:\\nhttps://github.com/Aaron-Pazdera/MonikaBot");
+				allURLs.remove(i);
 			}
 		}
 
+		// Return the results in a file, and/or post them.
 		if (tokens[2].contains("postfile")) {
-			saveAttachmentLinks(allAttachmentURLs);
+			saveAttachmentLinks(allURLs);
 			BotUtils.sendFile(event.getChannel(), new File(attachmentLinksFilePath));
 		} else if (tokens[2].contains("file")) {
-			saveAttachmentLinks(allAttachmentURLs);
+			saveAttachmentLinks(allURLs);
 		} else if (tokens[2].contains("post")) {
-			for (int i = 0; i < allAttachmentURLs.size(); i += 5) {
+			for (int i = 0; i < allURLs.size(); i += 5) {
 				String attachmentMessage = "";
 				for (int j = i; j < i + 5; j++) {
-					if (j < allAttachmentURLs.size()) {
-						attachmentMessage += allAttachmentURLs.get(j) + "\n";
+					if (j < allURLs.size()) {
+						attachmentMessage += allURLs.get(j) + "\n";
 					}
 				}
 				BotUtils.sendMessage(event.getChannel(), attachmentMessage);
 			}
 		} else if (tokens[2].contains("print")) {
-			for (String i : allAttachmentURLs) {
+			for (String i : allURLs) {
 				System.out.println(i);
 			}
 		} else {
@@ -305,8 +324,7 @@ public class InterserverCommands {
 		// Post a message describing which emoji go to which channel
 		String message = "Move to channel:";
 		// The sorted emoji keyset is stored globally so that it doesn't have to be
-		// sorted
-		// every time the event listener triggers.
+		// sorted every time the event listener triggers.
 		sortedRegisteredEmoji = emojiToChannel.keySet().stream().collect(Collectors.toList());
 		Collections.sort(sortedRegisteredEmoji, (e1, e2) -> e1.getName().compareTo(e2.getName()));
 		for (ReactionEmoji e : sortedRegisteredEmoji) {
@@ -405,7 +423,7 @@ public class InterserverCommands {
 			// Creates if not exists
 			d.mkdirs();
 			f.createNewFile();
-			
+
 			out = new PrintWriter(f);
 		} catch (Exception e) {
 			e.printStackTrace();
