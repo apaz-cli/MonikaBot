@@ -84,6 +84,7 @@ public class DiscordUtils {
 	/**
 	 * Re-usable instance of jackson.
 	 */
+	@SuppressWarnings("deprecation")
 	public static final ObjectMapper MAPPER = new ObjectMapper()
 			.registerModule(new AfterburnerModule())
 			.enable(SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID)
@@ -101,6 +102,7 @@ public class DiscordUtils {
 	/**
 	 * Like {@link #MAPPER} but it doesn't serialize nulls.
 	 */
+	@SuppressWarnings("deprecation")
 	public static final ObjectMapper MAPPER_NO_NULLS = new ObjectMapper()
 			.registerModule(new AfterburnerModule())
 			.setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -839,6 +841,8 @@ public class DiscordUtils {
 			case INVITE_UPDATE:
 			case MEMBER_PRUNE:
 				return new AuditLogEntry(id, user, changes, json.reason, actionType, options);
+		default:
+			break;
 		}
 
 		return null;
@@ -951,7 +955,7 @@ public class DiscordUtils {
 
 		if (!a.getClass().isAssignableFrom(b.getClass())) return false;
 
-		if (((IDiscordObject) a).getLongID() != ((IDiscordObject) b).getLongID()) return false;
+		if (((IDiscordObject<?>) a).getLongID() != ((IDiscordObject<?>) b).getLongID()) return false;
 
 		return true;
 	}

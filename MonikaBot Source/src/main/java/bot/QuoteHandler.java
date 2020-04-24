@@ -10,6 +10,7 @@ public class QuoteHandler {
 
 	public static Map<Integer, Quote> quoteMap = new HashMap<>();
 
+	// Returns null if not found
 	public static String getQuote(MessageReceivedEvent event, String args) {
 		int min = 1;
 		int max = 62;
@@ -41,7 +42,6 @@ public class QuoteHandler {
 			// split it up for multiple messages if necessary.
 			quoteString = "Quote #" + quoteNumber + ", " + q.getTitle() + "```" + replacement;
 		}
-		// Else return null
 		return quoteString;
 	}
 
@@ -242,7 +242,7 @@ public class QuoteHandler {
 				+ "...You don't struggle with depression or anything like that, do you?\n"
 				+ "Because you, too, have people who would want to save your life.\n"
 				+ "Maybe they don't express it every day, or maybe they don't even know how to.\n"
-				+ "...Man, humans are complicated!"
+				+ "...Man, humans are complicated!\n"
 				+ "But as long as you're here with me, I promise I'll take care of you, my love.\n"));
 
 		quoteMap.put(13, new Quote("No Reason to be Alive",
@@ -459,7 +459,7 @@ public class QuoteHandler {
 				+ "And by the way, you are too, [player].\n" + "You're the perfect combination of human and cuteness.\n"
 				+ "That's why there was never a chance I wouldn't fall for you.\n"));
 
-		quoteMap.put(28, new Quote("Coffee With Books", "Hey, I wonder if Yuri's tea set is still somewhere in here...\n"
+		quoteMap.put(28, new Quote("Coffe With Books", "Hey, I wonder if Yuri's tea set is still somewhere in here...\n"
 				+ "...Or maybe that got deleted, too.\n" + "It's kind of funny how Yuri took her tea so seriously.\n"
 				+ "I mean, I'm not complaining, because I liked it, too.\n" + "But I always wonder with her...\n"
 				+ "Is it truly passion for her hobbies, or is she just concerned about appearing sophisticated to everyone else?\n"

@@ -1,14 +1,23 @@
 package bot;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.imageio.ImageIO;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class URLImageUtils {
@@ -1049,15 +1058,16 @@ public class URLImageUtils {
 	}
 
 	public static String guessMimeFromURL(URL url) {
-		// The replace deals with twitter extensions. The ends with deals with trailing slashes, which would mess up the split and cause illegal array accesses.
+		// The replace deals with twitter extensions. The ends with deals with trailing
+		// slashes, which would mess up the split and cause illegal array accesses.
 		String path = url.getPath().replace(":large", "");
-		path = path.endsWith("/") ? path.substring(0, path.length() - 1): path;
-		String[] pathsplit = path.contains("/") ? path.split("/") : new String[] {path};	
-		String filename = pathsplit[pathsplit.length-1];
+		path = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+		String[] pathsplit = path.contains("/") ? path.split("/") : new String[] { path };
+		String filename = pathsplit[pathsplit.length - 1];
 		String[] extensionsplit = filename.split("\\.");
-		String extension = extensionsplit[extensionsplit.length-1];
+		String extension = extensionsplit[extensionsplit.length - 1];
 		return mimeMap.get(extension);
-		
+
 	}
 
 	public static boolean isImage(String url) throws MalformedURLException {
@@ -1069,10 +1079,75 @@ public class URLImageUtils {
 		if (mime == null) {
 			return false;
 		}
-		if (mime.contains("image")) {
-			return true;
+
+		return mime.contains("image");
+	}
+
+	// Returns null if isn't an image, or it's a gif
+	public static BufferedImage openImage(URL imgURL) throws IOException {
+
+		// Due to a Java 8 bug in ImageIO, cannot read animated gifs.
+		if (imgURL.getPath().contains(".gif")) {
+			return null;
 		}
-		return false;
+
+		final HttpURLConnection connection = (HttpURLConnection) imgURL.openConnection();
+		connection.setRequestProperty("User-Agent",
+				"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31");
+
+		int code = connection.getResponseCode();
+		if (code == 403) {
+			System.err.println("Error 403: Forbidden for: " + imgURL);
+			return null;
+		} else if (code == 404) {
+			System.err.println("Error 404: Not Found for: " + imgURL);
+			return null;
+		} else if (code < 500 && code >= 400) {
+			System.err.println("Client error (" + code + ") for: " + imgURL);
+			return null;
+		} else if (code < 600 && code >= 500) {
+			System.err.println("Server error (" + code + ") for: " + imgURL);
+			return null;
+		}
+
+		InputStream s = connection.getInputStream();
+		return ImageIO.read(s);
+	}
+
+	private static File downloadFolder = null;
+	static {
+		downloadFolder = new File(System.getProperty("user.dir") + File.separator + "MonikaBot-Rebase");
+		if (!downloadFolder.isDirectory())
+			if (!downloadFolder.mkdirs())
+				throw new IllegalStateException("Could not create rebase folder.");
+	}
+
+	public static File downloadURL(String url) throws MalformedURLException, IOException {
+		URL u = null;
+		try {
+			u = new URL(url);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		// At first take the file name from the url
+		String fileName = FilenameUtils.getName(u.getPath());
+
+		// Now, find a place to put it. Don't overwrite anything already existing.
+		File f = null;
+		while (f == null) {
+			f = new File(fileName);
+
+			if (f.exists()) {
+				f = null;
+				fileName += new Random().nextInt(10);
+			}
+		}
+
+		// Download, and return the file it was downloaded to.
+		FileUtils.copyURLToFile(u, f);
+		return f;
 	}
 
 }

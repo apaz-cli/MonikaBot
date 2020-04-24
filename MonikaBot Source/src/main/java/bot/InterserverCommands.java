@@ -13,8 +13,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import bot.messagewrappers.Box;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionEvent;
 import sx.blah.discord.handle.impl.obj.ReactionEmoji;
@@ -178,8 +181,8 @@ public class InterserverCommands {
 			} catch (MalformedURLException e) {
 				System.err.println(
 						"There was an issue where a URL accepted by the URL_REGEX pattern was not accepted by java.net.URL's constructor.\n"
-						+ "URL: " + allURLs.get(i) + "\n" 
-						+ "Please create an issue on Github at:\\nhttps://github.com/Aaron-Pazdera/MonikaBot");
+								+ "URL: " + allURLs.get(i) + "\n"
+								+ "Please create an issue on Github at:\\nhttps://github.com/Aaron-Pazdera/MonikaBot");
 				allURLs.remove(i);
 			}
 		}
@@ -338,6 +341,119 @@ public class InterserverCommands {
 		// Post first message of transplant, then listen onEmojiMoveAttachment
 		markWithEmoji(event.getChannel().sendMessage(loadedAttachmentLinks.remove(0)));
 
+	};
+
+	static Command deleteAttachments = (event, args) -> {
+		if (!InterserverCommands.isAuthorized(event.getAuthor(), event.getGuild())) {
+			return;
+		}
+
+		List<String> targetURLs = new ArrayList<>();
+		{
+			String[] tokens = args.trim().split(" ");
+			for (String token : tokens) {
+				targetURLs.add(token);
+			}
+		}
+		if (targetURLs.isEmpty()) {
+			return;
+		}
+
+		// Go through each message in the channel, and see if it contains any of the
+		// urls. If it does, remove those and repost the links that remain.
+		// This process may get rid of other content, for example conversations, but
+		// that's all right.
+		synchronized (event.getChannel()) {
+			for (IMessage m : event.getChannel().getFullMessageHistory()) {
+				// Skip the calling message
+				if (m.equals(event.getMessage()))
+					continue;
+
+				List<String> originalLinks = new ArrayList<>();
+				originalLinks.addAll(m.getAttachments().stream().map((a) -> a.getUrl()).collect(Collectors.toList()));
+				originalLinks.addAll(URLImageUtils.matchAllStrURLs(m.getContent()));
+				List<String> newLinks = new ArrayList<>(originalLinks);
+				for (String s : originalLinks) {
+					if (targetURLs.contains(s)) {
+						newLinks.remove(s);
+						m.delete();
+					}
+				}
+				if (originalLinks.size() != newLinks.size()) {
+					BotUtils.sendMessage(event.getChannel(), newLinks.stream().reduce("", (s1, s2) -> s1 + '\n' + s2));
+				}
+			}
+
+			event.getMessage().delete();
+		}
+	};
+
+	static Command rebase = (event, args) -> {
+		if (!InterserverCommands.isAuthorized(event.getAuthor(), event.getGuild())) {
+			return;
+		}
+		synchronized (event.getChannel()) {
+			for (IMessage m : event.getChannel().getFullMessageHistory()) {
+				List<String> urls = URLImageUtils.matchAllStrURLs(m.getContent());
+				{
+					// Trim the non-images out.
+					urls.removeIf((url) -> {
+						boolean remove = false;
+						try {
+							remove = !URLImageUtils.isImage(url);
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+						return remove;
+					});
+					// If there's nothing to rebase, then we're done.
+					if (urls.isEmpty())
+						continue;
+
+					// If we're still going, then there are still things to rebase.
+					// So, add all the attachments back in so that we don't lose them when we delete
+					// the message.
+					List<String> attachments = m.getAttachments().stream().map((a) -> a.getUrl())
+							.collect(Collectors.toList());
+					// Trim the non-images out again, then join the lists together.
+					attachments.removeIf((url) -> {
+						boolean remove = false;
+						try {
+							remove = !URLImageUtils.isImage(url);
+						} catch (MalformedURLException e) {
+							e.printStackTrace();
+						}
+						return remove;
+					});
+					urls.addAll(attachments);
+				}
+
+				// Download all of the links and attachments to rebase.
+				final List<String> failures = new Vector<>();
+				List<File> downloadedFiles = urls.stream().map((url) -> {
+					File f = null;
+					try {
+						f = URLImageUtils.downloadURL(url);
+					} catch (IOException e) {
+						e.printStackTrace();
+						failures.add(url);
+					}
+					return f;
+				}).filter(f -> f != null).collect(Collectors.toList());
+
+				// If a download fails, then we want to rebase what succeeded, but also not
+				// delete the old message, because it may still have goodies in it.
+				while (!downloadedFiles.isEmpty()) {
+					File f = downloadedFiles.remove(downloadedFiles.size() - 1);
+					BotUtils.sendFile(event.getChannel(), f);
+				}
+				if (!failures.isEmpty()) {
+					m.delete();
+				}
+			}
+		}
+
+		event.getMessage().delete();
 	};
 
 	// Given a message, will react with the green X emoji, followed by all the emoji

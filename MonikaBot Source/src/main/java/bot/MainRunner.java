@@ -8,7 +8,7 @@ public class MainRunner {
 
 	// Change this if the token is regenerated, or overwrite it with argument from
 	// command line.
-	private static String token = "NTU1OTYyNjI1OTY0Mzc2MDY0.XNh6cg.SwMn1H9tSzFNxmbnuSlqPVLNS4E";
+	private static String token = "NTU1OTYyNjI1OTY0Mzc2MDY0.XVqw4w.YBIvVBLYWtXqWY5EYL5mFlIXtZ0";
 
 	// Handles the creation and getting of a IDiscordClient object for a token
 	private static IDiscordClient getBuiltDiscordClient(String token) {

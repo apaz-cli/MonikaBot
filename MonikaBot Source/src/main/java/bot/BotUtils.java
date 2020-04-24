@@ -2,6 +2,10 @@ package bot;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
@@ -61,26 +65,26 @@ class BotUtils {
 	public static String codeBlock(String message, String language) {
 		return "```" + language + "\n" + message + "```";
 	}
-	
+
 	static IMessage sendMessage(IChannel channel, String message) {
 		Box box = new Box();
 		Flag finished = new Flag();
 
 		RequestBuffer.request(() -> {
-		    synchronized (finished) {
-		        try {
-		            box.result = channel.sendMessage(message);
-		        } catch (DiscordException e) {
-		            System.out.println("Message could not be sent. Returned the error: ");
-		            e.printStackTrace();
-		        } finally {
-		            finished.on = true;
-		            finished.notify();
-		        }
-		    }
+			synchronized (finished) {
+				try {
+					box.result = channel.sendMessage(message);
+				} catch (DiscordException e) {
+					System.out.println("Message could not be sent. Returned the error: ");
+					e.printStackTrace();
+				} finally {
+					finished.on = true;
+					finished.notify();
+				}
+			}
 		});
 		synchronized (finished) {
-		    if (!finished.on)
+			if (!finished.on)
 				try {
 					finished.wait(60000);
 				} catch (InterruptedException e) {
@@ -90,26 +94,30 @@ class BotUtils {
 	}
 
 	static IMessage sendFile(IChannel channel, File file) {
-		class Box { IMessage result; }
-		class Flag { boolean on; }
+		class Box {
+			IMessage result;
+		}
+		class Flag {
+			boolean on;
+		}
 		Box box = new Box();
 		Flag finished = new Flag();
 
 		RequestBuffer.request(() -> {
-		    synchronized (finished) {
-		        try {
-		            box.result = channel.sendFile(file);
-		        } catch (DiscordException | FileNotFoundException e) {
-		            System.out.println("Message could not be sent. Returned the error: ");
-		            e.printStackTrace();
-		        } finally {
-		            finished.on = true;
-		            finished.notify();
-		        }
-		    }
+			synchronized (finished) {
+				try {
+					box.result = channel.sendFile(file);
+				} catch (DiscordException | FileNotFoundException e) {
+					System.out.println("Message could not be sent. Returned the error: ");
+					e.printStackTrace();
+				} finally {
+					finished.on = true;
+					finished.notify();
+				}
+			}
 		});
 		synchronized (finished) {
-		    if (!finished.on)
+			if (!finished.on)
 				try {
 					finished.wait(60000);
 				} catch (InterruptedException e) {
@@ -119,32 +127,56 @@ class BotUtils {
 	}
 
 	static IMessage sendFileMessage(IChannel channel, String message, File file) {
-		class Box { IMessage result; }
-		class Flag { boolean on; }
+		class Box {
+			IMessage result;
+		}
+		class Flag {
+			boolean on;
+		}
 		Box box = new Box();
 		Flag finished = new Flag();
 
 		RequestBuffer.request(() -> {
-		    synchronized (finished) {
-		        try {
-		            box.result = channel.sendFile(message, file);
-		        } catch (DiscordException | FileNotFoundException e) {
-		            System.out.println("Message could not be sent. Returned the error: ");
-		            e.printStackTrace();
-		        } finally {
-		            finished.on = true;
-		            finished.notify();
-		        }
-		    }
+			synchronized (finished) {
+				try {
+					box.result = channel.sendFile(message, file);
+				} catch (DiscordException | FileNotFoundException e) {
+					System.out.println("Message could not be sent. Returned the error: ");
+					e.printStackTrace();
+				} finally {
+					finished.on = true;
+					finished.notify();
+				}
+			}
 		});
 		synchronized (finished) {
-		    if (!finished.on)
+			if (!finished.on)
 				try {
 					finished.wait(60000);
 				} catch (InterruptedException e) {
 				}
 		}
 		return box.result;
+	}
+
+	static String getIP() throws UnknownHostException {
+		String addresses = "";
+		try {
+			Enumeration<?> e = NetworkInterface.getNetworkInterfaces();
+			while (e.hasMoreElements()) {
+				NetworkInterface n = (NetworkInterface) e.nextElement();
+				Enumeration<?> ee = n.getInetAddresses();
+				while (ee.hasMoreElements()) {
+					InetAddress i = (InetAddress) ee.nextElement();
+
+					String address = i.getHostAddress();
+					addresses += address.contains(":") || address.startsWith("127") ? "" : address + "\n";
+				}
+			}
+		} catch (Exception e) {
+		}
+
+		return addresses.trim();
 	}
 
 }

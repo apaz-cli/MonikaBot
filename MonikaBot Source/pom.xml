@@ -7,7 +7,6 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Monika Bot</name>
 
-
 	<repositories>
 		<repository>
 			<id>jcenter</id>
@@ -21,7 +20,13 @@
 			<artifactId>Discord4J</artifactId>
 			<version>2.10.1</version>
 		</dependency>
-	</dependencies>
 
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
+
+	</dependencies>
 
 </project>
