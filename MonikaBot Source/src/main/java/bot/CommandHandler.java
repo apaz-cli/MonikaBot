@@ -130,9 +130,9 @@ public class CommandHandler {
 			long ourID = MainRunner.getClient().getOurUser().getLongID();
 			for (IMessage m : history.asArray()) {
 				if (m.getAuthor().getLongID() == ourID) {
-					if(m.getAttachments().isEmpty()) {
+					if (m.getAttachments().isEmpty()) {
 						m.delete();
-						
+
 						// Courtesy to Discord to avoid RateLimitExceptions
 						try {
 							Thread.sleep(250);
@@ -186,7 +186,8 @@ public class CommandHandler {
 			commandMap.put("rc", InterserverCommands.registerChannel);
 			// No arguments
 			commandMap.put("reset", InterserverCommands.resetGlobalState);
-			// No arguments, information is gathered from the placement of registerChannel commands.
+			// No arguments, information is gathered from the placement of registerChannel
+			// commands.
 			commandMap.put("transplant", InterserverCommands.transplant);
 			// List of urls to delete
 			commandMap.put("delete", InterserverCommands.deleteAttachments);

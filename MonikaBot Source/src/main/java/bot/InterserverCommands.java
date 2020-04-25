@@ -445,6 +445,11 @@ public class InterserverCommands {
 				while (!downloadedFiles.isEmpty()) {
 					File f = downloadedFiles.remove(downloadedFiles.size() - 1);
 					BotUtils.sendFile(event.getChannel(), f);
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
 				if (failures.isEmpty()) {
 					m.delete();
@@ -452,13 +457,13 @@ public class InterserverCommands {
 					for (String failure : failures) {
 						BotUtils.sendMessage(event.getChannel(), "Failed to rebase image: " + failure);
 						try {
-							Thread.sleep(250);
+							Thread.sleep(500);
 						} catch (InterruptedException e) {
 						}
 					}
 				}
 
-				// Finally, delete all the stuff we've downloaded.
+				// Finally, delete all the stuff we've downloaded from the message.
 				for (File f : downloadedFiles) {
 					f.delete();
 				}
