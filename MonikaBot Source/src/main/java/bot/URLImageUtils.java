@@ -1,7 +1,9 @@
 package bot;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -17,8 +19,8 @@ import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
 public class URLImageUtils {
 
@@ -1137,16 +1139,42 @@ public class URLImageUtils {
 		// Now, find a place to put it. Don't overwrite anything already existing.
 		File f = null;
 		while (f == null) {
-			f = new File(fileName);
-
+			f = new File(downloadFolder.getPath() + File.separator + fileName);
+			System.out.println(f.getPath());
 			if (f.exists()) {
 				f = null;
-				fileName += new Random().nextInt(10);
+				if (fileName.contains(".")) {
+					String[] nameSpt = fileName.split("\\.");
+					nameSpt[nameSpt.length - 2] += new Random().nextInt(10);
+					fileName = String.join(".", nameSpt);
+				} else {
+					fileName += new Random().nextInt(10);
+				}
 			}
 		}
 
-		// Download, and return the file it was downloaded to.
-		FileUtils.copyURLToFile(u, f);
+		final HttpURLConnection connection = (HttpURLConnection) u.openConnection();
+		connection.setRequestProperty("User-Agent",
+				"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31");
+
+		int code = connection.getResponseCode();
+		if (code == 403) {
+			System.err.println("Error 403: Forbidden for: " + u);
+			return null;
+		} else if (code == 404) {
+			System.err.println("Error 404: Not Found for: " + u);
+			return null;
+		} else if (code < 500 && code >= 400) {
+			System.err.println("Client error (" + code + ") for: " + u);
+			return null;
+		} else if (code < 600 && code >= 500) {
+			System.err.println("Server error (" + code + ") for: " + u);
+			return null;
+		}
+
+		InputStream s = new BufferedInputStream(connection.getInputStream());
+		FileOutputStream out = new FileOutputStream(f);
+		IOUtils.copy(s, out);
 		return f;
 	}
 

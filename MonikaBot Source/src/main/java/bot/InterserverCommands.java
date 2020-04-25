@@ -14,10 +14,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import bot.messagewrappers.Box;
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.reaction.ReactionEvent;
 import sx.blah.discord.handle.impl.obj.ReactionEmoji;
@@ -393,6 +391,7 @@ public class InterserverCommands {
 			return;
 		}
 		synchronized (event.getChannel()) {
+			event.getMessage().delete();
 			for (IMessage m : event.getChannel().getFullMessageHistory()) {
 				List<String> urls = URLImageUtils.matchAllStrURLs(m.getContent());
 				{
@@ -447,13 +446,24 @@ public class InterserverCommands {
 					File f = downloadedFiles.remove(downloadedFiles.size() - 1);
 					BotUtils.sendFile(event.getChannel(), f);
 				}
-				if (!failures.isEmpty()) {
+				if (failures.isEmpty()) {
 					m.delete();
+				} else {
+					for (String failure : failures) {
+						BotUtils.sendMessage(event.getChannel(), "Failed to rebase image: " + failure);
+						try {
+							Thread.sleep(250);
+						} catch (InterruptedException e) {
+						}
+					}
+				}
+
+				// Finally, delete all the stuff we've downloaded.
+				for (File f : downloadedFiles) {
+					f.delete();
 				}
 			}
 		}
-
-		event.getMessage().delete();
 	};
 
 	// Given a message, will react with the green X emoji, followed by all the emoji

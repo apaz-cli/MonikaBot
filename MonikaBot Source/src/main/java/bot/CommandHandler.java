@@ -130,12 +130,15 @@ public class CommandHandler {
 			long ourID = MainRunner.getClient().getOurUser().getLongID();
 			for (IMessage m : history.asArray()) {
 				if (m.getAuthor().getLongID() == ourID) {
-					m.delete();
-					// Courtesy to Discord to avoid RateLimitExceptions
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					if(m.getAttachments().isEmpty()) {
+						m.delete();
+						
+						// Courtesy to Discord to avoid RateLimitExceptions
+						try {
+							Thread.sleep(250);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
