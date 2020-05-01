@@ -364,8 +364,7 @@ public class InterserverCommands {
 		synchronized (event.getChannel()) {
 			for (IMessage m : event.getChannel().getFullMessageHistory()) {
 				// Skip the calling message
-				if (m.equals(event.getMessage()))
-					continue;
+				if (m.equals(event.getMessage())) continue;
 
 				List<String> originalLinks = new ArrayList<>();
 				originalLinks.addAll(m.getAttachments().stream().map((a) -> a.getUrl()).collect(Collectors.toList()));
@@ -387,12 +386,13 @@ public class InterserverCommands {
 	};
 
 	static Command rebase = (event, args) -> {
-		if (!InterserverCommands.isAuthorized(event.getAuthor(), event.getGuild())) {
-			return;
-		}
+		if (!InterserverCommands.isAuthorized(event.getAuthor(), event.getGuild())) return;
+
 		synchronized (event.getChannel()) {
 			event.getMessage().delete();
 			for (IMessage m : event.getChannel().getFullMessageHistory()) {
+				if (m.getAuthor().equals(MainRunner.getClient().getOurUser())) continue;
+
 				List<String> urls = URLImageUtils.matchAllStrURLs(m.getContent());
 				{
 					// Trim the non-images out.
@@ -406,8 +406,7 @@ public class InterserverCommands {
 						return remove;
 					});
 					// If there's nothing to rebase, then we're done.
-					if (urls.isEmpty())
-						continue;
+					if (urls.isEmpty()) continue;
 
 					// If we're still going, then there are still things to rebase.
 					// So, add all the attachments back in so that we don't lose them when we delete
@@ -446,7 +445,7 @@ public class InterserverCommands {
 					File f = downloadedFiles.remove(downloadedFiles.size() - 1);
 					BotUtils.sendFile(event.getChannel(), f);
 					try {
-						Thread.sleep(500);
+						Thread.sleep(5000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -455,9 +454,10 @@ public class InterserverCommands {
 					m.delete();
 				} else {
 					for (String failure : failures) {
+						if (failure.contains("//is2.4chan.org")) continue;
 						BotUtils.sendMessage(event.getChannel(), "Failed to rebase image: " + failure);
 						try {
-							Thread.sleep(500);
+							Thread.sleep(5000);
 						} catch (InterruptedException e) {
 						}
 					}

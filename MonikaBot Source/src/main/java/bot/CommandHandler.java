@@ -73,6 +73,7 @@ public class CommandHandler {
 		});
 
 		commandMap.put("sfwmonika", (event, args) -> {
+			event.getMessage().delete();
 			File image = ImageHandler.getRandomSFWImage();
 			if (image == null) {
 				System.err.println("Please fill the sfw image folder with images.");
@@ -85,6 +86,7 @@ public class CommandHandler {
 			if (!ImageHandler.nsfwChannelList.contains(event.getChannel().getStringID())) {
 				BotUtils.sendMessage(event.getChannel(), "NSFW Commands are not enabled in this channel.");
 			} else {
+				event.getMessage().delete();
 				File image = ImageHandler.getRandomNSFWImage();
 				if (image == null) {
 					System.err.println("Please fill the nsfw image folder with images.");
