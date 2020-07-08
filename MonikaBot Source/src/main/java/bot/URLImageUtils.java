@@ -1072,15 +1072,18 @@ public class URLImageUtils {
 
 	}
 
-	public static boolean isImage(String url) throws MalformedURLException {
-		return isImage(new URL(url));
+	public static boolean isImage(String url) {
+		try {
+			return isImage(new URL(url));
+		} catch (MalformedURLException e) {
+			return false;
+		}
+
 	}
 
 	public static boolean isImage(URL url) {
 		String mime = guessMimeFromURL(url);
-		if (mime == null) {
-			return false;
-		}
+		if (mime == null) { return false; }
 
 		return mime.contains("image");
 	}
@@ -1089,9 +1092,7 @@ public class URLImageUtils {
 	public static BufferedImage openImage(URL imgURL) throws IOException {
 
 		// Due to a Java 8 bug in ImageIO, cannot read animated gifs.
-		if (imgURL.getPath().contains(".gif")) {
-			return null;
-		}
+		if (imgURL.getPath().contains(".gif")) { return null; }
 
 		final HttpURLConnection connection = (HttpURLConnection) imgURL.openConnection();
 		connection.setRequestProperty("User-Agent",
@@ -1120,8 +1121,7 @@ public class URLImageUtils {
 	static {
 		downloadFolder = new File(System.getProperty("user.dir") + File.separator + "MonikaBot-Rebase");
 		if (!downloadFolder.isDirectory())
-			if (!downloadFolder.mkdirs())
-				throw new IllegalStateException("Could not create rebase folder.");
+			if (!downloadFolder.mkdirs()) throw new IllegalStateException("Could not create rebase folder.");
 	}
 
 	public static File downloadURL(String url) throws MalformedURLException, IOException {

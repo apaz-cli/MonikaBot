@@ -1,52 +1,65 @@
 package bot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import discord4j.core.object.entity.Member;
+import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.channel.MessageChannel;
+import reactor.core.publisher.Flux;
 
 public class QuoteHandler {
 
 	public static Map<Integer, Quote> quoteMap = new HashMap<>();
 
-	// Returns null if not found
-	public static String getQuote(MessageReceivedEvent event, String args) {
-		int min = 1;
-		int max = 62;
-		Random random = new Random();
-		int quoteNumber = 0; // 0 is not actually in the map.
+	private static String getQuoteHeader(int quoteNum, String quoteTitle) {
+		return new StringBuilder("Quote #").append(quoteNum).append(", ").append(quoteTitle).toString();
+	}
 
+	private static int parseQuoteNumber(String args) {
+		int min = 1;
+		int max = quoteMap.size();
+		Random random = new Random();
+		int quoteNumber = 0;
 		if (args != null) {
 			try {
 				int argNum = Integer.parseInt(args.split(" ")[0]);
 				if (min <= argNum || argNum <= max) {
 					quoteNumber = argNum;
+				} else {
+					quoteNumber = random.nextInt(max - min + 1) + min;
 				}
-
-			} catch (NumberFormatException e) {
+			} catch (Exception e) {
 				quoteNumber = random.nextInt(max - min + 1) + min;
 			}
 		} else {
 			quoteNumber = random.nextInt(max - min + 1) + min;
 		}
+		return quoteNumber;
+	}
 
-		String quoteString = null;
-		if (quoteMap.containsKey(quoteNumber)) {
-			Quote q = quoteMap.get(quoteNumber);
+	private static String MESSAGE_SPLIT_CHAR = ":";
 
-			// Run the RegEx replace on all of them to replace [player] with their current
-			// nickname.
-			String replacement = q.getQuote().replace("[player]", event.getAuthor().getDisplayName(event.getGuild()));
-			// The replacement will always end with the closing ```, but will know how to
-			// split it up for multiple messages if necessary.
-			quoteString = "Quote #" + quoteNumber + ", " + q.getTitle() + "```" + replacement;
+	public static Flux<Message> sendQuote(Member member, MessageChannel channel, String args) {
+		int quoteNum = parseQuoteNumber(args);
+		Quote q = quoteMap.get(quoteNum);
+		String quoteTitle = q.getTitle();
+		String quote = q.getQuote().replace("[player]", member.getDisplayName());
+
+		String[] split = quote.split(MESSAGE_SPLIT_CHAR);
+		List<String> messages = new ArrayList<>();
+		messages.add(getQuoteHeader(quoteNum, quoteTitle) + '\n' + BotUtils.codeBlock(split[0]));
+		for (int i = 1; i < split.length; i++) {
+			messages.add(BotUtils.codeBlock(split[i]));
 		}
-		return quoteString;
+
+		return Flux.fromIterable(messages).flatMap(channel::createMessage);
 	}
 
 	static {
-		System.out.println("");
 		System.out.println("Loading the Quote Map.");
 
 		// 1, Same Room
@@ -913,8 +926,6 @@ public class QuoteHandler {
 						+ "I'm sorry for making such a big deal out of it...\n"
 						+ "And I love you no matter what, so you can do what you need to do.\n"
 						+ "Now, where was I...?\n"));
-
-		System.out.println("Done.");
 	}
 
 }
