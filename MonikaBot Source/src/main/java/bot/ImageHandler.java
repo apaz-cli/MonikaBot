@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
-import sx.blah.discord.handle.obj.IChannel;
+import discord4j.common.util.Snowflake;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import reactor.core.publisher.Mono;
 
 public class ImageHandler {
 
@@ -115,9 +117,7 @@ public class ImageHandler {
 	}
 
 	public static File getRandomSFWImage() {
-		if (sfwImageIndex.size() == 0) {
-			return null;
-		}
+		if (sfwImageIndex.size() == 0) { return null; }
 		String randomImageName = sfwImageIndex.get(Math.abs(new Random().nextInt(sfwImageIndex.size())));
 		File randomImage = new File(randomImageName);
 		if (randomImage.exists()) {
@@ -127,16 +127,12 @@ public class ImageHandler {
 		}
 		randomImageName = sfwImageIndex.get(new Random().nextInt(sfwImageIndex.size()));
 		randomImage = new File(randomImageName);
-		if (!randomImage.exists()) {
-			return null;
-		}
+		if (!randomImage.exists()) { return null; }
 		return randomImage;
 	}
 
 	public static File getRandomNSFWImage() {
-		if (nsfwImageIndex.size() == 0) {
-			return null;
-		}
+		if (nsfwImageIndex.size() == 0) { return null; }
 		String randomImageName = nsfwImageIndex.get(Math.abs(new Random().nextInt(nsfwImageIndex.size())));
 		File randomImage = new File(randomImageName);
 		if (randomImage.exists()) {
@@ -146,9 +142,7 @@ public class ImageHandler {
 		}
 		randomImageName = nsfwImageIndex.get(new Random().nextInt(nsfwImageIndex.size()));
 		randomImage = new File(randomImageName);
-		if (!randomImage.exists()) {
-			return null;
-		}
+		if (!randomImage.exists()) { return null; }
 		return randomImage;
 	}
 
@@ -163,15 +157,34 @@ public class ImageHandler {
 		return accepted;
 	}
 
-	public static boolean isChannelNSFW(IChannel channel) {
-		return nsfwChannelList.contains(channel.getStringID());
+	public static Mono<Boolean> isChannelNSFW(MessageCreateEvent e) {
+		return e.getMessage().getChannel().map(c -> isChannelNSFW(c.getId()));
+
 	}
 
-	public static boolean isChannelNSFW(Long channelID) {
-		return nsfwChannelList.contains(Long.toString(channelID));
+	public static boolean isChannelNSFW(Snowflake snowflake) {
+		return nsfwChannelList.contains(Long.toString(snowflake.asLong()));
 	}
 
 	public static boolean isChannelNSFW(String channelID) {
 		return nsfwChannelList.contains(channelID);
+	}
+
+	public static Mono<Void> enableNSFW(MessageCreateEvent event) {
+		return event.getMessage().getChannel().flatMap(channel -> {
+			if (!ImageHandler.nsfwChannelList.contains(channel.getId().toString())) {
+				ImageHandler.nsfwChannelList.add(channel.getId().asString());
+				ImageHandler.saveNSFWChannelList();
+			}
+			return channel.createMessage("NSFW enabled in " + channel.getMention());
+		}).then();
+	}
+
+	public static Mono<Void> disableNSFW(MessageCreateEvent event) {
+		return event.getMessage().getChannel().flatMap(channel -> {
+			ImageHandler.nsfwChannelList.remove(channel.getId().asString());
+			ImageHandler.saveNSFWChannelList();
+			return channel.createMessage("NSFW disabled in " + channel.getMention());
+		}).then();
 	}
 }

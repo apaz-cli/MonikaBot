@@ -1,53 +1,75 @@
 package bot;
 
-import sx.blah.discord.api.ClientBuilder;
-import sx.blah.discord.api.IDiscordClient;
-import sx.blah.discord.api.events.EventDispatcher;
+import discord4j.common.util.Snowflake;
+import discord4j.core.DiscordClientBuilder;
+import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.lifecycle.ReadyEvent;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.User;
+import bot.CommandContext;
 
 public class MainRunner {
 
 	// Change this if the token is regenerated, or overwrite it with argument from
 	// command line.
-	private static String token = "NTU1OTYyNjI1OTY0Mzc2MDY0.XVqw4w.YBIvVBLYWtXqWY5EYL5mFlIXtZ0";
+	private static String token = "TOKEN HERE";
 
-	// Handles the creation and getting of a IDiscordClient object for a token
-	private static IDiscordClient getBuiltDiscordClient(String token) {
-		ClientBuilder Monika = new ClientBuilder();
-		Monika.withToken(token);
-		Monika.set5xxRetryCount(Integer.MAX_VALUE);
-		Monika.setMaxReconnectAttempts(Integer.MAX_VALUE);
-		return Monika.build();
-	}
-
-	private static IDiscordClient cli = getBuiltDiscordClient(token);;
-
-	public static void main(String[] args) {
-
+	public static Snowflake OURID;
+	
+	static {
 		ImageHandler.loadNSFWChannelList();
 		ImageHandler.indexSFW();
 		ImageHandler.indexNSFW();
+	}
+
+	// Handles the creation and getting of a IDiscordClient object for a token
+	private static GatewayDiscordClient getBuiltDiscordClient(String token) {
+
+		GatewayDiscordClient Monika = DiscordClientBuilder.create(token).build().login().block();
+
+		Monika.getEventDispatcher().on(ReadyEvent.class).subscribe(event -> {
+			User self = event.getSelf();
+			OURID = self.getId();
+			System.out.println(String.format("Logged in as %s#%s", self.getUsername(), self.getDiscriminator()));
+		});
+
+		return Monika;
+	}
+
+	public static void main(String[] args) {
 
 		if (args.length == 1) {
 			token = args[0];
 		}
 
-		cli = getBuiltDiscordClient(token);
+		GatewayDiscordClient Monika = getBuiltDiscordClient(token);
 
-		// Register a listener via the EventSubscriber annotation which allows for
-		// organization and delegation of events
-		EventDispatcher dispatcher = cli.getDispatcher();
-		dispatcher.registerListener(new CommandHandler());
+		// @nof
+		Monika.on(MessageCreateEvent.class).filter(event -> {
+			return event.getMessage().getAuthor().map(author -> !author.isBot()).orElse(false)
+					&& event.getMessage().getContent().trim().startsWith(BotUtils.BOT_PREFIX);
+		}).map(event -> {
+			String msg = event.getMessage().getContent().trim();
+			String[] messageSplit = msg.split(" ");
+			String commandStr = messageSplit[0].substring(BotUtils.BOT_PREFIX.length()).toLowerCase().trim();
 
-		if (InterserverCommands.ENABLED) {
-			dispatcher.registerListener(new InterserverCommands());
-		}
+			String argStr = "";
+			if (messageSplit.length >= 1) {
+				for (int i = 1; i < messageSplit.length; i++) {
+					argStr += messageSplit[i].trim() + " ";
+				}
+				argStr = argStr == "" ? "" : argStr.substring(0, argStr.length() - 1);
+			}
+			return new CommandContext(event, commandStr, argStr);
+		}).filter(context -> CommandHandler.commandMap.containsKey(context.getCommand()))
+		.flatMap((context) -> {
+			System.out.println("Command entered: " + context.getCommand());
+			Command command = CommandHandler.commandMap.get(context.getCommand());
+			return command.execute(context.getEvent(), context.getArgs());
+		}).subscribe(result->{}, error->{ for (int i = 0; i < 3; i++) {System.err.println();} error.printStackTrace(); });
+		// @dof
 
-		// Only login after all events are registered otherwise some may be missed.
-		cli.login();
+		Monika.onDisconnect().block();
 	}
 
-	static IDiscordClient getClient() {
-		return cli;
-	}
-	
 }

@@ -1,7 +1,9 @@
 package bot;
 
-import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import reactor.core.publisher.Mono;
 
+@FunctionalInterface
 public interface Command {
-	void runCommand(MessageReceivedEvent event, String argStr);
+	abstract Mono<Void> execute(MessageCreateEvent event, String args);
 }
