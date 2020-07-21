@@ -178,8 +178,8 @@ public class CommandHandler {
 				Flux<String> messageLinks = Flux.fromIterable(URLImageUtils.matchAllStrURLs(message.getContent()));
 				return attachmentURLs.concatWith(messageLinks).filter(m -> URLImageUtils.isImage(m));
 			});
-
-			// These two have to be finalized so that they can be ued in the lambda chain at
+			
+			// These two have to be finalized so that they can be used in the lambda chain at
 			// the bottom.
 			File imageLinkFile = new File("Attachment Links.txt");
 			FileInputStream imageLinkFileStream = null;
@@ -199,10 +199,8 @@ public class CommandHandler {
 			final PrintWriter pwf = pw;
 
 			return imageURLs.map(url -> { pwf.println(url); return url; }).doOnComplete(() -> pwf.close())
-					.then(authorizedEvent.flatMap(e -> 
-						e.getMessage().getChannel()).flatMap(c -> 
-							c.createMessage(s -> 
-								s.addFile("Attachment Links.txt", imageLinkFileStreamFinal))))
+					.then(authorizedEvent.flatMap(e -> e.getMessage().getChannel()).flatMap(
+							c -> c.createMessage(s -> s.addFile("Attachment Links.txt", imageLinkFileStreamFinal))))
 					.then(deleteCallingMessage(authorizedEvent));
 		});
 	}
